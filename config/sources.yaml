@@ -1,0 +1,126 @@
+# ============================================================
+# CẤU HÌNH NGUỒN CRAWL
+# ============================================================
+
+fetcher:
+  raw_dir: data/raw
+  min_delay: 1.5          # giây giữa 2 request cùng 1 domain
+  jitter: 1.0
+  user_agent: "UniCourseBot/1.0 (student deep-learning project; contact: sonbeo2015@gmail.com)"
+
+sources:
+  # ---------- TIẾNG VIỆT: bài bác bỏ tin giả (role=debunk -> vào KB, và trích claim làm mẫu fake) ----------
+  tingia_vi:
+    enabled: true
+    lang: vi
+    role: debunk
+    label: ""                           # nhãn gán sau khi trích claim (xem README)
+    label_source: factcheck
+    home: https://tingia.gov.vn/
+    listing_pages:
+      - url: "https://tingia.gov.vn/tin-gia?page={page}"
+        pages: [1, 10]
+      - url: "https://tingia.gov.vn/tin-xac-thuc?page={page}"
+        pages: [1, 10]
+      - url: "https://tingia.gov.vn/canh-bao?page={page}"
+        pages: [1, 10]
+    article_regex: 'tingia\.gov\.vn/[a-z0-9\-]+\.html$'
+    max_articles: 500
+
+  tuoitre_giathat:
+    enabled: true
+    lang: vi
+    role: debunk
+    label: ""
+    label_source: factcheck
+    home: https://tuoitre.vn/
+    listing_pages:
+      - url: "https://tuoitre.vn/gia-that/trang-{page}.htm"
+        pages: [1, 20]
+    article_regex: '-\d{10,}\.htm$'
+    max_articles: 400
+
+  # ---------- TIẾNG VIỆT: tin thật (cùng chủ đề/giai đoạn với tin giả: y tế, lừa đảo, xã hội, v.v.) ----------
+  dantri_real:
+    enabled: true
+    lang: vi
+    role: article
+    label: real
+    label_source: source
+    home: https://dantri.com.vn/
+    sitemaps:
+      - https://dantri.com.vn/sitemaps/articles.xml
+    sitemap_regex: 'Article-2026'
+    article_regex: '-\d+\.htm$'
+    max_articles: 1000
+
+  vnexpress_real:
+    enabled: true
+    lang: vi
+    role: article
+    label: real
+    label_source: source
+    home: https://vnexpress.net/
+    listing_pages:
+      - url: "https://vnexpress.net/thoi-su-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/the-gioi-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/kinh-doanh-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/phap-luat-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/suc-khoe-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/khoa-hoc-cong-nghe-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/goc-nhin-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/bat-dong-san-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/giai-tri-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/the-thao-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/oto-xe-may-p{page}"
+        pages: [1, 20]
+      - url: "https://vnexpress.net/du-lich-p{page}"
+        pages: [1, 20]
+    article_regex: '-\d+\.html$'
+    max_articles: 1500
+
+  # ---------- TIẾNG ANH ----------
+  politifact_debunk:
+    enabled: false
+    lang: en
+    role: debunk
+    label: ""
+    label_source: factcheck
+    home: https://www.politifact.com/
+    listing_pages:
+      - url: "https://www.politifact.com/factchecks/list/?page={page}"
+        pages: [1, 25]
+    article_regex: '/factchecks/\d{4}/'
+    max_articles: 500
+
+  bbc_real:
+    enabled: false
+    lang: en
+    role: article
+    label: real
+    label_source: source
+    home: https://www.bbc.com/
+    sitemaps:
+      - https://www.bbc.com/sitemaps/https-index-com-news.xml
+    article_regex: '/articles/[a-z0-9]+'
+    max_articles: 1000
+
+  reuters_real:
+    enabled: false                      # Reuters robots.txt Disallow / cho bot lạ -> tắt để tránh bị chặn IP
+    lang: en
+    role: article
+    label: real
+    label_source: source
+    home: https://www.reuters.com/
+    article_regex: ""
+    max_articles: 1000
