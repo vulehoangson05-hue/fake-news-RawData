@@ -30,21 +30,31 @@ PARSED_DIR = Path("data/parsed")
 # ─────────────────────────── helpers ────────────────────────────────────────
 
 def urls_from_sitemap(fetcher: PoliteFetcher, sitemap_url: str,
-                      article_regex: str | None, visited: set[str]) -> list[str]:
+                      article_regex: str | None, visited: set[str],
+                      sitemap_regex: str | None = None) -> list[str]:
     """Đệ quy parse sitemap index + sitemap thường."""
     html = fetcher.fetch(sitemap_url)
     if not html:
         return []
+    # Một số response bị decode BOM UTF-8 thành chuỗi "ï»¿" trước XML declaration.
+    if html.startswith("\ufeff"):
+        html = html[1:]
+    elif html.startswith("\u00ef\u00bb\u00bf"):
+        html = html[3:]
     urls = []
     soup = BeautifulSoup(html, "xml")
+    sitemap_pat = re.compile(sitemap_regex) if sitemap_regex else None
     # Sitemap index: chứa <sitemap><loc>…</loc></sitemap>
     for sm in soup.find_all("sitemap"):
         loc = sm.find("loc")
         if loc:
             child_url = loc.text.strip()
+            if sitemap_pat and not sitemap_pat.search(child_url):
+                continue
             if child_url not in visited:
                 visited.add(child_url)
-                urls += urls_from_sitemap(fetcher, child_url, article_regex, visited)
+                urls += urls_from_sitemap(
+                    fetcher, child_url, article_regex, visited, sitemap_regex)
     # Sitemap thường: chứa <url><loc>…</loc></url>
     pat = re.compile(article_regex) if article_regex else None
     for u in soup.find_all("url"):
@@ -115,7 +125,8 @@ def run_source(fetcher: PoliteFetcher, name: str, src: dict, max_articles: int |
     if "sitemaps" in src:
         for sm_url in src["sitemaps"]:
             candidate_urls += urls_from_sitemap(
-                fetcher, sm_url, src.get("article_regex"), visited_sitemaps)
+                fetcher, sm_url, src.get("article_regex"), visited_sitemaps,
+                src.get("sitemap_regex"))
 
     if "listing_pages" in src:
         for entry in src["listing_pages"]:
@@ -200,7 +211,9 @@ def main():
         visited: set[str] = set()
         urls = []
         for sm in src.get("sitemaps", []):
-            urls += urls_from_sitemap(fetcher, sm, src.get("article_regex"), visited)
+            urls += urls_from_sitemap(
+                fetcher, sm, src.get("article_regex"), visited,
+                src.get("sitemap_regex"))
         for u in urls[:50]:
             print(u)
         print(f"… tổng {len(urls)} URL")
